@@ -29,3 +29,7 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    app.command.create_country:
+        class: App\Command\CreateCountryCommand
+        tags:
+            - {name: console.command}
