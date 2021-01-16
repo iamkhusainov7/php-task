@@ -2,9 +2,7 @@
 
 namespace App\Command;
 
-use App\Exception\ItemExistsException;
-use App\Model\Country;
-use InvalidArgumentException;
+use App\Controller\CountryController;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -37,15 +35,13 @@ class CreateCountryCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $name = $this->extractName();
-        $canonicalName = $this->extractCanonicalName();
+        $name = strtolower($this->extractName());
+        $canonicalName = strtolower($this->extractCanonicalName());
 
-        $this->assertIfExist($name, $canonicalName);
-
-        $country = Country::create([
-            'name'  => ucfirst($name),
-            'canonicalName' => ucfirst($canonicalName)
-        ]);
+        $controller = (new CountryController())->create(
+            trim($name),
+            trim($canonicalName)
+        );
 
         $this->io->success("Country has been successfully created!");
 
@@ -57,8 +53,6 @@ class CreateCountryCommand extends Command
         $name = $this->input->getArgument('name');
 
         if ($name) {
-            $this->validateInput($name, 'name');
-
             return $name;
         }
 
@@ -70,8 +64,6 @@ class CreateCountryCommand extends Command
         $canonicalName = $this->input->getArgument('canonicalName');
 
         if ($canonicalName) {
-            $this->validateInput($canonicalName, 'canonical name');
-
             return $canonicalName;
         }
 
@@ -86,10 +78,8 @@ class CreateCountryCommand extends Command
         $name = $helper->ask($this->input, $this->output, $question);
 
         if (!$name) {
-            $this->askName();
+            return $this->askName();
         }
-
-        $this->validateInput($name, 'name');
 
         return $name;
     }
@@ -102,43 +92,9 @@ class CreateCountryCommand extends Command
         $canonicalName = $helper->ask($this->input, $this->output, $question);
 
         if (!$canonicalName) {
-            $this->askCanonicalName();
+            return $this->askCanonicalName();
         }
-
-        $this->validateInput($canonicalName, 'canonical name');
 
         return $canonicalName;
-    }
-
-    private function validateInput($input, string $inputName): bool
-    {
-        if (
-            !preg_match("/^[A-Z][a-z]+$/", ucfirst($input))
-        ) {
-            throw new InvalidArgumentException("The {$inputName} must not include any numbers or special chars!");
-        }
-
-        if (
-            mb_strlen($input) > 100
-        ) {
-            throw new InvalidArgumentException("The length of {$inputName} can not be more than 100!");
-        }
-
-        return true;
-    }
-
-    private function assertIfExist($name, $canonicalName)
-    {
-        $country = Country::where('name', $name)
-            ->orWhere('canonicalName', $canonicalName)
-            ->exists();
-        
-        if (
-            $country
-        ) {
-            throw new ItemExistsException("The country with this name or canonical name already exist!");
-        }
-
-        return false;
     }
 }

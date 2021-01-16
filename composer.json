@@ -12,6 +12,7 @@
         "symfony/dotenv": "5.2.*",
         "symfony/flex": "^1.3.1",
         "symfony/framework-bundle": "5.2.*",
+        "symfony/validator": "5.2.*",
         "symfony/yaml": "5.2.*",
         "wouterj/eloquent-bundle": "^2.0"
     },
