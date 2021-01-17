@@ -48,7 +48,7 @@ class CityController extends AbstractController
     public function create(Request $request)
     {
         try {
-            $form = $this->createForm(CityType::class, new City(), ['csrf_protection' => false]);
+            $form = $this->createForm(CityType::class, new City());
 
             $data = [
                 'name' => $request->get('name'),
@@ -61,7 +61,7 @@ class CityController extends AbstractController
                 !$form->isValid()
             ) {
                 throw new InvalidArgumentException(
-                    (string)$form->getErrors()
+                    (string)$form->getErrors(true)
                 );
             }
 

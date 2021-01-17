@@ -39,7 +39,7 @@ class City extends Model
 
     public function country()
     {
-        return $this->belongsTo('App\Model\Country');
+        return $this->belongsTo(Country::class);
     }
 
     public function save(array $options = [])
