@@ -3,13 +3,14 @@
 namespace App\Controller;
 
 use App\Exception\ItemExistsException;
+use App\Form\CountryType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Model\Country;
+use Symfony\Component\Form\Forms;
 use InvalidArgumentException;
-use Throwable;
-use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Form\Extension\Validator\ValidatorExtension;
 use Symfony\Component\Validator\Validation;
 
 class CountryController extends AbstractController
@@ -19,31 +20,56 @@ class CountryController extends AbstractController
      */
     public function show(string $canonName): Response
     {
-        try {
-            $country = Country::find($canonName);
-            return $this->json([
-                'message' => 'Welcome to your new controller!',
-                'path' => 'src/Controller/CountryController.php',
-            ]);
-        } catch (Throwable $e) {
-            throw $e;
-        }
+        $country = Country::getByCanonName($canonName);
+        $country->cities;
+
+        return $this->json([
+            'data' => $country,
+        ]);
     }
 
-    public function create($name, $canonName)
+    /**
+     * This method is only to be accessed from command line
+     * 
+     * @param string $name
+     * @param string $canonName
+     * 
+     * @return App\Model\Country
+     */
+    public function create(string $name, string $canonName)
     {
-        try {
-            $this->validate($name, $canonName);
+        $validator = Validation::createValidator();
+        $formFactory = Forms::createFormFactoryBuilder()
+            ->addExtension(new ValidatorExtension($validator))
+            ->getFormFactory();
 
-            $this->assertIfExist($name, $canonName);
+        $form = $formFactory->createBuilder(
+            CountryType::class,
+            new Country()
+        )
+            ->getForm();
 
-            $country = Country::create([
-                'name' => $name,
-                'canonicalName' => $canonName
-            ]);
-        } catch (Throwable $e) {
-            throw $e;
+        $data = [
+            'name' => $name,
+            'canonicalName' => $canonName,
+        ];
+
+        $form->submit($data);
+
+        if (
+            !$form->isValid()
+        ) {
+            throw new InvalidArgumentException(
+                (string)$form->getErrors(true)
+            );
         }
+
+        $this->assertIfExist($name, $canonName);
+
+        $country = new Country($data);
+        $country->save();
+
+        return $country;
     }
 
     protected function assertIfExist($name, $canonicalName)
@@ -55,55 +81,9 @@ class CountryController extends AbstractController
         if (
             $country
         ) {
-            throw new ItemExistsException("The country with this name or canonical name already exist!");
+            throw new ItemExistsException("The country with this name or canonical name already exists!");
         }
 
         return false;
-    }
-
-    protected function validate($name, $canonicalName)
-    {
-        $validator = Validation::createValidator();
-
-        $errors = $validator->validate(
-            [
-                'name' => $name,
-                'canonicalName' => $canonicalName
-            ],
-            $this->validationRules()
-        );
-
-        if (
-            count($errors) > 0
-        ) {
-            throw new InvalidArgumentException((string) $errors);
-        }
-
-        return true;
-    }
-
-    private function validationRules()
-    {
-        $regex = new Assert\Regex([
-            'pattern' => '/^[a-z]+$/'
-        ]);
-
-        $notBlank = new Assert\NotBlank();
-        $length = new Assert\Length([
-            'max' => 100
-        ]);
-
-        return new Assert\Collection([
-            'name' => [
-                $notBlank,
-                $regex,
-                $length
-            ],
-            'canonicalName' => [
-                $notBlank,
-                $regex,
-                $length
-            ]
-        ]);
     }
 }

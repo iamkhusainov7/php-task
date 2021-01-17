@@ -9,6 +9,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\HttpFoundation\Request;
+use Throwable;
 
 class CreateCountryCommand extends Command
 {
@@ -38,12 +40,16 @@ class CreateCountryCommand extends Command
         $name = strtolower($this->extractName());
         $canonicalName = strtolower($this->extractCanonicalName());
 
-        $controller = (new CountryController())->create(
-            trim($name),
-            trim($canonicalName)
-        );
+        try {
+            $controller = (new CountryController())->create(
+                trim($name),
+                trim($canonicalName)
+            );
 
-        $this->io->success("Country has been successfully created!");
+            $this->io->success("Country has been successfully created!");
+        } catch (Throwable $e) {
+            $this->io->error($e->getMessage());
+        }
 
         return 0;
     }
