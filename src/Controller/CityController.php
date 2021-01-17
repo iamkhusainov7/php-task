@@ -34,7 +34,7 @@ class CityController extends AbstractController
             $city = City::find($id);
 
             return $this->json([
-                'message' => 'Welcome to your new controller!',
+                'data' => $city,
                 'path' => 'src/Controller/CityController.php',
             ]);
         } catch (Throwable $e) {
@@ -54,7 +54,7 @@ class CityController extends AbstractController
                 'name' => $request->get('name'),
                 'country_id' => (int)$request->get('country_id'),
             ];
-            
+
             $form->submit($data);
 
             if (

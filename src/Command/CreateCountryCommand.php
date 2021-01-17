@@ -47,6 +47,7 @@ class CreateCountryCommand extends Command
             );
 
             $this->io->success("Country has been successfully created!");
+            $this->io->success("Country id is: {$controller->id}");
         } catch (Throwable $e) {
             $this->io->error($e->getMessage());
         }
